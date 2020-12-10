@@ -1,0 +1,20 @@
+Description: Short circuit root test for building Debian packages
+   * Patch install.Installer class not to error out when subclassed as
+     DebianInstaller from dh-python
+Author: Scott Kitterman <scott@kitterman.com>
+Origin: vendor
+Forwarded: not-needed
+Last-Update: 2020-04-13
+
+--- flit-2.3.0.orig/flit/install.py
++++ flit-2.3.0/flit/install.py
+@@ -108,7 +108,8 @@ class Installer(object):
+ 
+         if (hasattr(os, 'getuid') and (os.getuid() == 0) and
+                 (not os.environ.get('FLIT_ROOT_INSTALL'))):
+-            raise RootInstallError
++            if type(self).__name__ != 'DebianInstaller':
++                raise RootInstallError
+ 
+         if user is None:
+             self.user = self._auto_user(python)

@@ -1,0 +1,57 @@
+flit (3.0.0-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Scott Kitterman ]
+  * Replace failing automatic man page generation with manual process that at
+    least works (Closes: #977044)
+
+  [ Ondřej Nový ]
+  * d/control: Update Maintainer field with new Debian Python Team
+    contact address.
+  * d/control: Update Vcs-* fields with new Debian Python Team Salsa
+    layout.
+
+  [ Antonio Terceiro ]
+  * New upstream version 3.0.0
+    - Makes RECORD deterministic (Closes: #968636)
+    - Builds reproducibly (Closes: #964440)
+  * debian/build.py: fix location of top level directory (Closes: #975796)
+  * debian/build.py: fix wrt the new upstream release
+  * autopkgtest: drop unecessary breaks-testbed restriction
+  * autopkgtest: only test against Debian
+  * autopkgtest: ignore test that fails without `python`
+
+ -- Antonio Terceiro <terceiro@debian.org>  Thu, 10 Dec 2020 12:28:33 -0300
+
+flit (2.3.0-3) unstable; urgency=medium
+
+  * Add missing autopkgtest depends on tox
+
+ -- Scott Kitterman <scott@kitterman.com>  Mon, 13 Apr 2020 12:31:23 -0400
+
+flit (2.3.0-2) unstable; urgency=medium
+
+  * Add autopkgtest running upstream test suite with tox
+  * Patch install.Installer class not to error out when subclassed as
+    DebianInstaller from dh-python
+
+ -- Scott Kitterman <scott@kitterman.com>  Mon, 13 Apr 2020 02:15:02 -0400
+
+flit (2.3.0-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Scott Kitterman <scott@kitterman.com>  Sat, 11 Apr 2020 23:00:36 -0400
+
+flit (2.2.0-2) unstable; urgency=medium
+
+  * Add missing license to debian/copyright
+
+ -- Scott Kitterman <scott@kitterman.com>  Mon, 06 Apr 2020 16:25:01 -0400
+
+flit (2.2.0-1) unstable; urgency=medium
+
+  * Initial release (Closes: #953992)
+
+ -- Scott Kitterman <scott@kitterman.com>  Mon, 23 Mar 2020 11:12:49 -0400
