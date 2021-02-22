@@ -1,8 +1,9 @@
 Source: flit
 Section: python
 Priority: optional
-Maintainer: Debian Python Team <team+python@tracker.debian.org>
-Uploaders: Scott Kitterman <scott@kitterman.com>
+Maintainer: Pexip AS <packaging@pexip.com>
+XSBC-Pexip-Original-Maintainer: Debian Python Team <team+python@tracker.debian.org>
+XSBC-Pexip-Original-Uploaders: Scott Kitterman <scott@kitterman.com>
 Build-Depends: debhelper-compat (= 12),
                dh-python,
                help2man,
@@ -15,6 +16,7 @@ Standards-Version: 4.5.0
 Homepage: https://flit.readthedocs.io/en/latest/
 Vcs-git: https://salsa.debian.org/python-team/applications/flit.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/flit
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ bullseye
 
 Package: flit
 Architecture: all
