@@ -7,7 +7,6 @@ import io
 import logging
 import os
 import os.path as osp
-import re
 import stat
 import sys
 import tempfile
@@ -83,7 +82,7 @@ class WheelBuilder:
 
     @classmethod
     def from_ini_path(cls, ini_path, target_fp):
-        # Local import so bootstrapping doesn't try to load pytoml
+        # Local import so bootstrapping doesn't try to load toml
         from .config import read_flit_config
         directory = ini_path.parent
         ini_info = read_flit_config(ini_path)
@@ -98,11 +97,9 @@ class WheelBuilder:
 
     @property
     def wheel_filename(self):
+        dist_name = common.normalize_dist_name(self.metadata.name, self.metadata.version)
         tag = ('py2.' if self.metadata.supports_py2 else '') + 'py3-none-any'
-        return '{}-{}-{}.whl'.format(
-                re.sub(r"[^\w\d.]+", "_", self.metadata.name, flags=re.UNICODE),
-                re.sub(r"[^\w\d.]+", "_", self.metadata.version, flags=re.UNICODE),
-                tag)
+        return '{}-{}.whl'.format(dist_name, tag)
 
     def _add_file_old(self, full_path, rel_path):
         log.debug("Adding %s to zip file", full_path)
@@ -200,8 +197,9 @@ class WheelBuilder:
                 common.write_entry_points(self.entrypoints, f)
 
         for base in ('COPYING', 'LICENSE'):
-            for path in sorted(glob(str(self.directory / (base + '*')))):
-                self._add_file(path, '%s/%s' % (self.dist_info, osp.basename(path)))
+            for path in sorted(self.directory.glob(base + '*')):
+                if path.is_file():
+                    self._add_file(path, '%s/%s' % (self.dist_info, path.name))
 
         with self._write_to_zip(self.dist_info + '/WHEEL') as f:
             _write_wheel_file(f, supports_py2=self.metadata.supports_py2)

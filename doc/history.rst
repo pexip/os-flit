@@ -1,6 +1,39 @@
 Release history
 ===============
 
+Version 3.3
+-----------
+
+- ``PKG-INFO`` files in sdists are now generated the same way as ``METADATA`` in
+  wheels, fixing some issues with sdists (:ghpull:`410`).
+- ``flit publish`` now sends SHA-256 hashes, fixing uploads to GitLab package
+  repositories (:ghpull:`416`).
+- The ``[project]`` metadata table from :pep:`621` is now fully supported and
+  :ref:`documented <pyproject_toml_project>`. Projects using this can now
+  specify ``requires = ["flit_core >=3.2,<4"]`` in the ``[build-system]`` table.
+
+Version 3.2
+-----------
+
+- Experimental support for specifying metadata in a ``[project]`` table in
+  ``pyproject.toml`` as specified by :pep:`621` (:ghpull:`393`). If you try
+  using this, please specify ``requires = ["flit_core >=3.2.0,<3.3"]`` in the
+  ``[build-system]`` table for now, in case it needs to change for the next
+  release.
+- Fix writing METADATA file with multi-line information in certain fields
+  such as ``Author`` (:ghpull:`402`).
+- Fix building wheel when a directory such as LICENSES appears in the project
+  root directory (:ghpull:`401`).
+
+Version 3.1
+-----------
+
+- Update handling of names & version numbers in wheel filenames and
+  ``.dist-info`` folders in line with changes in the specs (:ghpull:`395`).
+- Switch from the deprecated ``pytoml`` package to ``toml`` (:ghpull:`378`).
+- Fix specifying backend-path in ``pyproject.toml`` for flit-core (as a list
+  instead of a string).
+
 Version 3.0
 -----------
 

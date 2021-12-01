@@ -1,3 +1,11 @@
-Tests: flit-user 
-Depends: @, python3-all, python3-requests, python3-testpath, python3-responses, python3-docutils, python3-pytoml, python3-pytest
+Tests: flit-user
+Depends:
+ python3-all,
+ python3-docutils,
+ python3-pytest,
+ python3-pytoml,
+ python3-requests,
+ python3-responses,
+ python3-testpath,
+ @
 Restrictions: allow-stderr

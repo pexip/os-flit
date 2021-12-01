@@ -3,17 +3,18 @@ Section: python
 Priority: optional
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Scott Kitterman <scott@kitterman.com>
-Build-Depends: debhelper-compat (= 12),
+Build-Depends: debhelper-compat (= 13),
                dh-python,
                help2man,
                python3,
                python3-docutils,
                python3-pygments,
-               python3-pytoml,
+               python3-toml,
                python3-requests
-Standards-Version: 4.5.0
+Standards-Version: 4.6.0
 Homepage: https://flit.readthedocs.io/en/latest/
-Vcs-git: https://salsa.debian.org/python-team/applications/flit.git
+Rules-Requires-Root: no
+Vcs-Git: https://salsa.debian.org/python-team/applications/flit.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/flit
 
 Package: flit
@@ -22,7 +23,7 @@ Depends: ${misc:Depends},
          ${python3:Depends},
          python3-docutils,
          python3-pygments,
-         python3-pytoml,
+         python3-toml,
          python3-requests,
 Description: simple way to put Python packages and modules on PyPI (PEP 517)
  Flit is a easy way to put Python packages and modules on PyPI. It tries to

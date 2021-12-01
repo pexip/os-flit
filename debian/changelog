@@ -1,3 +1,34 @@
+flit (3.3.0-1~bpo11+1) bullseye-backports; urgency=medium
+
+  * Rebuild for bullseye-backports.
+  * Update gbp.conf to use debian/bullseye-backports
+
+ -- Scott Kitterman <scott@kitterman.com>  Wed, 01 Dec 2021 16:35:56 -0500
+
+flit (3.3.0-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Steffen Moeller ]
+  * New upstream version 3.3.0 (Closes: #994589)
+  * d/control: Bumped standard to 4.5.1
+  * d/rules: removing __pycache__ folders from previous builds
+
+  [ Michael R. Crusoe ]
+  * Standards-Version: 4.6.0 (routine-update)
+  * debhelper-compat 13 (routine-update)
+  * Respect DEB_BUILD_OPTIONS in override_dh_auto_test target (routine-
+    update)
+  * Add salsa-ci file (routine-update)
+  * Rules-Requires-Root: no (routine-update)
+  * watch file standard 4 (routine-update)
+  * {Build-,}Depends: switch to python3-toml from -pytoml
+
+  [ Stefano Rivera ]
+  * Run autopkgtest against all supported Python 3 versions.
+
+ -- Stefano Rivera <stefanor@debian.org>  Thu, 25 Nov 2021 16:51:52 -0400
+
 flit (3.0.0-1) unstable; urgency=medium
 
   * Team upload
@@ -18,7 +49,7 @@ flit (3.0.0-1) unstable; urgency=medium
     - Builds reproducibly (Closes: #964440)
   * debian/build.py: fix location of top level directory (Closes: #975796)
   * debian/build.py: fix wrt the new upstream release
-  * autopkgtest: drop unecessary breaks-testbed restriction
+  * autopkgtest: drop unnecessary breaks-testbed restriction
   * autopkgtest: only test against Debian
   * autopkgtest: ignore test that fails without `python`
 
