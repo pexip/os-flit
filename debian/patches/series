@@ -1,1 +1,3 @@
 debian_installer_allowed_root.patch
+0002-use-system-tomli.patch
+build-with-local-flit_core.patch

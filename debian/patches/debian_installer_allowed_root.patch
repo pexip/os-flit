@@ -1,14 +1,22 @@
-Description: Short circuit root test for building Debian packages
-   * Patch install.Installer class not to error out when subclassed as
-     DebianInstaller from dh-python
-Author: Scott Kitterman <scott@kitterman.com>
+From: Scott Kitterman <scott@kitterman.com>
+Date: Tue, 7 Dec 2021 20:08:04 -0500
+Subject: Short circuit root test for building Debian packages
+
 Origin: vendor
 Forwarded: not-needed
 Last-Update: 2020-04-13
 
---- flit-2.3.0.orig/flit/install.py
-+++ flit-2.3.0/flit/install.py
-@@ -108,7 +108,8 @@ class Installer(object):
+  * Patch install.Installer class not to error out when subclassed as
+    DebianInstaller from dh-python
+---
+ flit/install.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/flit/install.py b/flit/install.py
+index 3ea9a4b..f29326c 100644
+--- a/flit/install.py
++++ b/flit/install.py
+@@ -109,7 +109,8 @@ class Installer(object):
  
          if (hasattr(os, 'getuid') and (os.getuid() == 0) and
                  (not os.environ.get('FLIT_ROOT_INSTALL'))):

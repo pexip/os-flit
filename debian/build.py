@@ -16,13 +16,7 @@ my_dir = Path(__file__).parent
 os.chdir(str(my_dir))
 sys.path.insert(0, 'flit_core')
 
-from flit_core import build_thyself
-from flit_core.config import LoadedConfig
 from flit.install import Installer
-
-#ap = argparse.ArgumentParser()
-#ap.add_argument('--user')
-#args = ap.parse_args()
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -80,17 +74,10 @@ class DebianInstaller(Installer):
 
         self.write_dist_info(dirs['purelib'])
 
-
-# Construct config for flit_core
-core_config = LoadedConfig()
-core_config.module = 'flit_core'
-core_config.metadata = build_thyself.metadata_dict
-core_config.reqs_by_extra['.none'] = build_thyself.metadata.requires_dist
-
 install_kwargs = {'user': False, 'symlink': False}
 # Install flit_core
-DebianInstaller(
-    my_dir / 'flit_core', core_config, **install_kwargs
+DebianInstaller.from_ini_path(
+    my_dir / 'flit_core' / 'pyproject.toml', **install_kwargs
 ).install_directly()
 print("Linked flit_core into site-packages.")
 

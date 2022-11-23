@@ -1,3 +1,74 @@
+flit (3.8.0-2~bpo11+1) bullseye-backports; urgency=medium
+
+  * Rebuild for bullseye-backports.
+
+ -- Scott Kitterman <scott@kitterman.com>  Tue, 22 Nov 2022 20:42:11 -0500
+
+flit (3.8.0-2) unstable; urgency=medium
+
+  * Update Vcs-Git field in debian/control to new Debian Python Team Salsa
+    layout
+  * Add manual depends on python3-tomli (upstream relies on embedded copy not
+    used in Debian)
+
+ -- Scott Kitterman <scott@kitterman.com>  Sun, 20 Nov 2022 13:58:30 -0500
+
+flit (3.8.0-1) unstable; urgency=medium
+
+  * New upstream release
+    - Refresh patches
+  * Update lintian overrides, add d/s/lintian-overrides
+
+ -- Scott Kitterman <scott@kitterman.com>  Wed, 09 Nov 2022 17:00:43 -0500
+
+flit (3.7.1-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream release.
+  * Refresh patches.
+  * Build with pybuild, fixing FTBFS. (Closes: #1009392)
+  * Patch: Build flit with the local flit_core.
+  * Bump Standards-Version to 4.6.1, no changes needed.
+  * Add myself to copyright.
+
+ -- Stefano Rivera <stefanor@debian.org>  Fri, 02 Sep 2022 18:58:37 +0200
+
+flit (3.6.0-1) unstable; urgency=medium
+
+  * New upstream release
+  * Move removal of build.py from install to clean
+  * Update debian/build.py for removal of build_thyself
+  * Add debian/patches/0002-use-system-tomli.patch since we will use the
+    system tomli
+  * Update debian/rules to remove the vendored tomli from the build
+  * Update autopkgtest depends
+  * Run package tests during build
+  * Clean up dist-info directory:
+    - Remove direct_url.json, not useful in Debian
+    - Update RECORD to reflect files installed by the package
+
+ -- Scott Kitterman <scott@kitterman.com>  Thu, 30 Dec 2021 11:50:05 -0500
+
+flit (3.5.1-1) unstable; urgency=medium
+
+  * New upstream release
+    - Refresh patches
+  * Replace build-depends on python3-toml with python3-tomli and
+    python3-tomli-w
+  * Remove build-depends on python3-pygments, not required
+  * Remove manually added binary depends, included in python3:Depends
+  * Update long description to mention PEP 621 support
+  * Correctly specify that build-deps not needed for clean are
+    Build-Depends-Indep
+  * Use sphinx-build instead of help2man to generate a more complete and
+    current man page
+  * Delete unneeded build-depends on python3-docutils and python3-requests
+  * Update lintian-overrides
+  * Set minimum dh-python version to 5.20211213 to avoid issues with depends
+    generation in earlier versions
+
+ -- Scott Kitterman <scott@kitterman.com>  Mon, 13 Dec 2021 20:31:59 -0500
+
 flit (3.3.0-1~bpo11+1) bullseye-backports; urgency=medium
 
   * Rebuild for bullseye-backports.
