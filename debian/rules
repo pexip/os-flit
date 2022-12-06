@@ -24,9 +24,12 @@ override_dh_python3:
 
 override_dh_auto_clean:
 	dh_clean
+	find flit flit_core -depth -type d -name __pycache__ -exec rm -r {} \;
 
 override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	# Tests require unpackaged modules to run
+endif
 
 man:
 	help2man -n flit -s 1 -o debian/flit.1 --no-discard-stderr --no-info flit

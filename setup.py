@@ -10,10 +10,10 @@ package_data = \
 {'': ['*'], 'flit': ['license_templates/*']}
 
 install_requires = \
-['flit_core>=3.0.0', 'requests', 'docutils', 'pytoml']
+['flit_core>=3.3.0', 'requests', 'docutils', 'toml']
 
 extras_require = \
-{":python_version in '3.3 3.4 3.5'": ['zipfile36'],
+{":python_version == '3.5'": ['zipfile36'],
  'doc': ['sphinx', 'sphinxcontrib_github_alt', 'pygments-github-lexers'],
  'test': ['testpath', 'responses', 'pytest>=2.7.3', 'pytest-cov']}
 
@@ -21,15 +21,15 @@ entry_points = \
 {'console_scripts': ['flit = flit:main']}
 
 setup(name='flit',
-      version='3.0.0',
+      version='3.3.0',
       description='A simple packaging tool for simple packages.',
-      author='Thomas Kluyver',
-      author_email='thomas@kluyver.me.uk',
-      url='https://github.com/takluyver/flit',
+      author=None,
+      author_email='Thomas Kluyver <thomas@kluyver.me.uk>',
+      url=None,
       packages=packages,
       package_data=package_data,
       install_requires=install_requires,
       extras_require=extras_require,
       entry_points=entry_points,
-      python_requires='>=3.5',
+      python_requires='>=3.6',
      )
