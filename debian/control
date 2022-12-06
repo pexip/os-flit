@@ -17,7 +17,7 @@ Homepage: https://flit.readthedocs.io/en/latest/
 Rules-Requires-Root: no
 Vcs-Git: https://salsa.debian.org/python-team/applications/flit.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/flit
-XS-Pexip-Upstream: http://ftp.debian.org/debian/ bullseye
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ bullseye-backports
 
 Package: flit
 Architecture: all
