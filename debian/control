@@ -5,33 +5,34 @@ Maintainer: Pexip AS <packaging@pexip.com>
 XSBC-Pexip-Original-Maintainer: Debian Python Team <team+python@tracker.debian.org>
 XSBC-Pexip-Original-Uploaders: Scott Kitterman <scott@kitterman.com>
 Build-Depends: debhelper-compat (= 13),
-               dh-python,
-               help2man,
-               python3,
-               python3-docutils,
-               python3-pygments,
-               python3-toml,
-               python3-requests
-Standards-Version: 4.6.0
+               dh-sequence-python3,
+               pybuild-plugin-pyproject,
+               python3-all,
+Build-Depends-Indep:
+               python3-tomli,
+               python3-tomli-w,
+               python3-sphinx,
+               python3-pytest,
+               python3-requests,
+               python3-responses,
+               python3-testpath,
+Standards-Version: 4.6.1
 Homepage: https://flit.readthedocs.io/en/latest/
 Rules-Requires-Root: no
-Vcs-Git: https://salsa.debian.org/python-team/applications/flit.git
+Vcs-Git: https://salsa.debian.org/python-team/packages/flit.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/flit
 XS-Pexip-Upstream: http://ftp.debian.org/debian/ bullseye-backports
 
 Package: flit
 Architecture: all
 Depends: ${misc:Depends},
+         python3-tomli,
          ${python3:Depends},
-         python3-docutils,
-         python3-pygments,
-         python3-toml,
-         python3-requests,
 Description: simple way to put Python packages and modules on PyPI (PEP 517)
  Flit is a easy way to put Python packages and modules on PyPI. It tries to
  require less thought about packaging and help you avoid common mistakes.
  .
- Flit supports PEP 517 Python packaging.
+ Flit supports PEP 517 Python packaging and PEP 621 project metadata.
  .
  Make the easy things easy and the hard things possible is an old motto from
  the Perl community. Flit is entirely focused on the easy things part of that,

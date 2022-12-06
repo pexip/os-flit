@@ -1,0 +1,23 @@
+From: Stefano Rivera <stefanor@debian.org>
+Date: Fri, 2 Sep 2022 13:20:45 +0200
+Subject: Build flit with the local flit_core
+
+Origin: vendor
+Forwarded: not-needed
+---
+ pyproject.toml | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/pyproject.toml b/pyproject.toml
+index caeefcd..e1ec281 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,6 +1,7 @@
+ [build-system]
+-requires = ["flit_core >=3.8.0,<4"]
++requires = []
+ build-backend = "flit_core.buildapi"
++backend-path = ["flit_core"]
+ 
+ [project]
+ name = "flit"

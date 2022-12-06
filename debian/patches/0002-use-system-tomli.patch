@@ -1,0 +1,23 @@
+From: Scott Kitterman <scott@kitterman.com>
+Date: Thu, 30 Dec 2021 09:10:52 -0500
+Subject: use system tomli in python lt 3_11
+
+Origin: vendor
+Forwarded: not-needed
+---
+ flit_core/flit_core/config.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/flit_core/flit_core/config.py b/flit_core/flit_core/config.py
+index 1292956..3fd0bd5 100644
+--- a/flit_core/flit_core/config.py
++++ b/flit_core/flit_core/config.py
+@@ -11,7 +11,7 @@ try:
+     import tomllib
+ except ImportError:
+     try:
+-        from .vendor import tomli as tomllib
++        import tomli as tomllib
+     # Some downstream distributors remove the vendored tomli.
+     # When that is removed, import tomli from the regular location.
+     except ImportError:

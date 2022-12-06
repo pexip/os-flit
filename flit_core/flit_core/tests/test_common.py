@@ -14,6 +14,15 @@ from flit_core.common import (
 samples_dir = Path(__file__).parent / 'samples'
 
 class ModuleTests(TestCase):
+    def test_ns_package_importable(self):
+        i = Module('ns1.pkg', samples_dir / 'ns1-pkg')
+        assert i.path == Path(samples_dir, 'ns1-pkg', 'ns1', 'pkg')
+        assert i.file == Path(samples_dir, 'ns1-pkg', 'ns1', 'pkg', '__init__.py')
+        assert i.is_package
+
+        assert i.in_namespace_package
+        assert i.namespace_package_name == 'ns1'
+
     def test_package_importable(self):
         i = Module('package1', samples_dir)
         assert i.path == samples_dir / 'package1'
@@ -61,9 +70,19 @@ class ModuleTests(TestCase):
                                 'version': '0.1'}
                          )
 
+        info = get_info_from_module(Module('moduleunimportabledouble', samples_dir))
+        self.assertEqual(info, {'summary': 'A sample unimportable module with double assignment',
+                                'version': '0.1'}
+                         )
+
         info = get_info_from_module(Module('module1', samples_dir / 'constructed_version'))
         self.assertEqual(info, {'summary': 'This module has a __version__ that requires runtime interpretation',
                                 'version': '1.2.3'}
+                         )
+
+        info = get_info_from_module(Module('package1', samples_dir / 'imported_version'))
+        self.assertEqual(info, {'summary': 'This module has a __version__ that requires a relative import',
+                                'version': '0.5.8'}
                          )
 
         with self.assertRaises(InvalidVersion):
@@ -99,6 +118,9 @@ def test_normalize_file_permissions():
         ("<4, > 3.2", False),
         (">3.4", False),
         (">=2.7, !=3.0.*, !=3.1.*, !=3.2.*", True),
+        ("== 3.9", False),
+        ("~=2.7", True),
+        ("~=3.9", False),
     ],
 )
 def test_supports_py2(requires_python, expected_result):

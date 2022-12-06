@@ -1,18 +1,30 @@
 name: Test
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-
+    ${{ github.ref_type }}-
+    ${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        python-version: [ 3.5, 3.6, 3.7, 3.8, 3.9, ]
+        platform: ["ubuntu-latest", "windows-latest"]
+        python-version: [ "3.6", "3.7", "3.8", "3.9", "3.10", "3.11-dev" ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -23,27 +35,6 @@ jobs:
 
       - name: Run tests
         run: tox
-
-      - name: Codecov upload
-        run: codecov
-
-  # tox-gh-actions requires Python >= 3.5, so test 3.4 separately
-  test-py34:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Python 3.4
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.4
-
-      - name: Install dependencies
-        run: |
-          pip install tox codecov
-
-      - name: Run tests
-        run: tox -e py34
 
       - name: Codecov upload
         run: codecov

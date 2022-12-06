@@ -1,0 +1,2 @@
+# Flit is self-building and does not need the pyproject plugin
+flit source: missing-prerequisite-for-pyproject-backend
