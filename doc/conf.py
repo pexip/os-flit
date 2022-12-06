@@ -34,7 +34,7 @@ extensions = [
     'sphinx_rtd_theme',
 ]
 
-github_project_url = "https://github.com/takluyver/flit"
+github_project_url = "https://github.com/pypa/flit"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -57,7 +57,7 @@ copyright = u'2015, Thomas Kluyver'
 # built documents.
 #
 # The short X.Y version.
-version = '3.3.0'
+version = '3.8.0'
 # The full version, including alpha/beta/rc tags.
 release = version #+ '.1'
 

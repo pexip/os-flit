@@ -5,8 +5,17 @@ import logging
 import os
 import os.path as osp
 from pathlib import Path
-import toml
 import re
+
+try:
+    import tomllib
+except ImportError:
+    try:
+        from .vendor import tomli as tomllib
+    # Some downstream distributors remove the vendored tomli.
+    # When that is removed, import tomli from the regular location.
+    except ImportError:
+        import tomli as tomllib
 
 from .versionno import normalise_version
 
@@ -66,8 +75,7 @@ pep621_allowed_fields = {
 def read_flit_config(path):
     """Read and check the `pyproject.toml` file with data about the package.
     """
-    with path.open('r', encoding='utf-8') as f:
-        d = toml.load(f)
+    d = tomllib.loads(path.read_text('utf-8'))
     return prep_toml_config(d, path)
 
 
@@ -121,7 +129,7 @@ def prep_toml_config(d, path):
         )
 
     unknown_sections = set(dtool) - {
-        'metadata', 'module', 'scripts', 'entrypoints', 'sdist'
+        'metadata', 'module', 'scripts', 'entrypoints', 'sdist', 'external-data'
     }
     unknown_sections = [s for s in unknown_sections if not s.lower().startswith('x-')]
     if unknown_sections:
@@ -139,9 +147,34 @@ def prep_toml_config(d, path):
         loaded_cfg.sdist_include_patterns = _check_glob_patterns(
             dtool['sdist'].get('include', []), 'include'
         )
+        exclude = [
+            "**/__pycache__",
+            "**.pyc",
+        ] + dtool['sdist'].get('exclude', [])
         loaded_cfg.sdist_exclude_patterns = _check_glob_patterns(
-            dtool['sdist'].get('exclude', []), 'exclude'
+            exclude, 'exclude'
         )
+
+    data_dir = dtool.get('external-data', {}).get('directory', None)
+    if data_dir is not None:
+        toml_key = "tool.flit.external-data.directory"
+        if not isinstance(data_dir, str):
+            raise ConfigError(f"{toml_key} must be a string")
+
+        normp = osp.normpath(data_dir)
+        if osp.isabs(normp):
+            raise ConfigError(f"{toml_key} cannot be an absolute path")
+        if normp.startswith('..' + os.sep):
+            raise ConfigError(
+                f"{toml_key} cannot point outside the directory containing pyproject.toml"
+            )
+        if normp == '.':
+            raise ConfigError(
+                f"{toml_key} cannot refer to the directory containing pyproject.toml"
+            )
+        loaded_cfg.data_directory = path.parent / data_dir
+        if not loaded_cfg.data_directory.is_dir():
+            raise ConfigError(f"{toml_key} must refer to a directory")
 
     return loaded_cfg
 
@@ -196,11 +229,6 @@ def _check_glob_patterns(pats, clude):
                 '{} pattern {!r} contains bad characters (<>:\"\\ or control characters)'
                 .format(clude, p)
             )
-        if '**' in p:
-            raise ConfigError(
-                "Recursive globbing (**) is not supported yet (in {} pattern {!r})"
-                .format(clude, p)
-            )
 
         normp = osp.normpath(p)
 
@@ -208,7 +236,7 @@ def _check_glob_patterns(pats, clude):
             raise ConfigError(
                 '{} pattern {!r} is an absolute path'.format(clude, p)
             )
-        if osp.normpath(p).startswith('..' + os.sep):
+        if normp.startswith('..' + os.sep):
             raise ConfigError(
                 '{} pattern {!r} points out of the directory containing pyproject.toml'
                 .format(clude, p)
@@ -228,6 +256,7 @@ class LoadedConfig(object):
         self.sdist_include_patterns = []
         self.sdist_exclude_patterns = []
         self.dynamic_metadata = []
+        self.data_directory = None
 
     def add_scripts(self, scripts_dict):
         if scripts_dict:
@@ -288,7 +317,7 @@ def _prep_metadata(md_sect, path):
     res = LoadedConfig()
 
     res.module = md_sect.get('module')
-    if not str.isidentifier(res.module):
+    if not all([m.isidentifier() for m in res.module.split(".")]):
         raise ConfigError("Module name %r is not a valid identifier" % res.module)
 
     md_dict = res.metadata
@@ -405,7 +434,8 @@ def read_pep621_metadata(proj, path) -> LoadedConfig:
     if 'name' not in proj:
         raise ConfigError('name must be specified in [project] table')
     _check_type(proj, 'name', str)
-    lc.module = md_dict['name'] = proj['name']
+    md_dict['name'] = proj['name']
+    lc.module = md_dict['name'].replace('-', '_')
 
     unexpected_keys = proj.keys() - pep621_allowed_fields
     if unexpected_keys:
@@ -551,7 +581,9 @@ def read_pep621_metadata(proj, path) -> LoadedConfig:
 
     if 'dependencies' in proj:
         _check_list_of_str(proj, 'dependencies')
-        md_dict['requires_dist'] = proj['dependencies']
+        reqs_noextra = proj['dependencies']
+    else:
+        reqs_noextra = []
 
     if 'optional-dependencies' in proj:
         _check_type(proj, 'optional-dependencies', dict)
@@ -566,16 +598,14 @@ def read_pep621_metadata(proj, path) -> LoadedConfig:
                     'Expected a string list for optional-dependencies ({})'.format(e)
                 )
 
-        reqs_noextra = md_dict.pop('requires_dist', [])
         lc.reqs_by_extra = optdeps.copy()
-
-        # Add optional-dependencies into requires_dist
-        md_dict['requires_dist'] = \
-            reqs_noextra + list(_expand_requires_extra(lc.reqs_by_extra))
-
         md_dict['provides_extra'] = sorted(lc.reqs_by_extra.keys())
 
-        # For internal use, record the main requirements as a '.none' extra.
+    md_dict['requires_dist'] = \
+        reqs_noextra + list(_expand_requires_extra(lc.reqs_by_extra))
+
+    # For internal use, record the main requirements as a '.none' extra.
+    if reqs_noextra:
         lc.reqs_by_extra['.none'] = reqs_noextra
 
     if 'dynamic' in proj:
