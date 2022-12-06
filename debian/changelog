@@ -1,3 +1,9 @@
+flit (3.3.0-1~bpo11+1) pexip; urgency=medium
+
+  * New upstream version
+
+ -- Huw Jones <huw@pexip.com>  Tue, 06 Dec 2022 15:53:01 +0000
+
 flit (3.3.0-1~bpo11+1) bullseye-backports; urgency=medium
 
   * Rebuild for bullseye-backports.
