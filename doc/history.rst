@@ -1,6 +1,139 @@
 Release history
 ===============
 
+Version 3.8
+-----------
+
+- A project name containing hyphens is now automatically translated to use
+  underscores for the import name (:ghpull:`566`).
+- New option :option:`flit install --only-deps` to install the dependencies of
+  the package, but not the package itself.
+- Add support for recursive globbing (``**``) in sdist includes and excludes
+  (:ghpull:`550`).
+- Python's bytecode cache files (``__pycache__`` folders and ``.pyc`` files)
+  are now always excluded from sdists (:ghpull:`581`).
+- Use tomllib in Python 3.11, rather than tomli (:ghpull:`573`, :ghpull:`604`).
+- Fix crash when unable to get a password from ``keyring`` (:ghpull:`567`).
+- Fix including modified files in sdist when using Mercurial (:ghpull:`541`).
+- Fix for some cases of determining whether a package supports Python 2 or not
+  (:ghpull:`593`).
+- Fix parsing version number from code using multiple assignments (:ghpull:`474`).
+- Document how to use a PyPI token with :envvar:`FLIT_PASSWORD` (:ghpull:`602`).
+- Fix link to information about environment variables for pip (:ghpull:`576`).
+- Link to the docs for the latest stable version in package metadata
+  (:ghpull:`589`).
+- Remove a mention of the ``toml`` package, which is no longer needed, from the
+  :doc:`development` page (:ghpull:`601`).
+- The :doc:`bootstrap <bootstrap>` install script for ``flit_core`` accepts a
+  new ``--install-root`` option.
+- Ensure the license file is included in packages on PyPI (:ghpull:`603`).
+
+Version 3.7.1
+-------------
+
+- Fix building packages which need execution to get the version number,
+  and have a relative import in ``__init__.py`` (:ghpull:`531`).
+
+Version 3.7
+-----------
+
+- Support for :ref:`external data files <pyproject_toml_external_data>` such
+  as man pages or Jupyter extension support files (:ghpull:`510`).
+- Project names are now lowercase in wheel filenames and ``.dist-info`` folder
+  names, in line with the specifications (:ghpull:`498`).
+- Improved support for :doc:`bootstrapping <bootstrap>` a Python environment,
+  e.g. for downstream packagers (:ghpull:`511`). ``flit_core.wheel`` is usable
+  with ``python -m`` to create wheels before the `build <https://pypi.org/project/build/>`_
+  tool is available, and ``flit_core`` sdists also include a script to install
+  itself from a wheel before `installer <https://pypi.org/project/installer/>`_
+  is available.
+- Use newer importlib APIs, fixing some deprecation warnings (:ghpull:`499`).
+
+Version 3.6
+-----------
+
+- ``flit_core`` now bundles the `tomli <https://pypi.org/project/tomli/>`_ TOML
+  parser library (version 1.2.3) to avoid a circular dependency between
+  ``flit_core`` and ``tomli`` (:ghpull:`492`). This means ``flit_core`` now has
+  no dependencies except Python itself, both at build time and at runtime,
+  simplifying :doc:`bootstrapping <bootstrap>`.
+
+Version 3.5.1
+-------------
+
+- Fix development installs with ``flit install --symlink`` and ``--pth-file``,
+  which were broken in 3.5.0, especially for packages using a ``src`` folder
+  (:ghpull:`472`).
+
+Version 3.5
+-----------
+
+- You can now use Flit to distribute a module or package inside a namespace
+  package (as defined by :pep:`420`). To do this, specify the import name of the
+  concrete, inner module you are packaging - e.g. ``name = "sphinxcontrib.foo"``
+  - either in the ``[project]`` table, or under ``[tool.flit.module]`` if you
+  want to use a different name on PyPI (:ghpull:`468`).
+- Flit no longer generates a ``setup.py`` file in sdists (``.tar.gz`` packages)
+  by default (:ghpull:`462`). Modern packaging tools don't need this. You can
+  use the ``--setup-py`` flag to keep adding it for now, but this will probably
+  be removed at some point in the future.
+- Fixed how ``flit init`` handles authors' names with non-ASCII characters
+  (:ghpull:`460`).
+- When ``flit init`` generates a LICENSE file, the new ``pyproject.toml`` now
+  references it (:ghpull:`467`).
+
+Version 3.4
+-----------
+
+- Python 3.6 or above is now required, both for ``flit`` and ``flit_core``.
+- Add a ``--setup-py`` option to ``flit build`` and ``flit publish``, and a
+  warning when neither this nor ``--no-setup-py`` are specified (:ghpull:`431`).
+  A future version will stop generating ``setup.py`` files in sdists by default.
+- Add support for standardised editable installs - ``pip install -e`` -
+  according to :pep:`660` (:ghpull:`400`).
+- Add a ``--pypirc`` option for ``flit publish`` to specify an alternative path
+  to a ``.pypirc`` config file describing package indexes (:ghpull:`434`).
+- Fix installing dependencies specified in a ``[project]`` table (:ghpull:`433`).
+- Fix building wheels when ``SOURCE_DATE_EPOCH`` (see :doc:`reproducible`) is
+  set to a date before 1980 (:ghpull:`448`).
+- Switch to using the `tomli <https://pypi.org/project/tomli/>`_ TOML parser,
+  in common with other packaging projects (:ghpull:`438`).
+  This supports TOML version 1.0.
+- Add a document on :doc:`bootstrap` (:ghpull:`441`).
+
+Version 3.3
+-----------
+
+- ``PKG-INFO`` files in sdists are now generated the same way as ``METADATA`` in
+  wheels, fixing some issues with sdists (:ghpull:`410`).
+- ``flit publish`` now sends SHA-256 hashes, fixing uploads to GitLab package
+  repositories (:ghpull:`416`).
+- The ``[project]`` metadata table from :pep:`621` is now fully supported and
+  :ref:`documented <pyproject_toml_project>`. Projects using this can now
+  specify ``requires = ["flit_core >=3.2,<4"]`` in the ``[build-system]`` table.
+
+Version 3.2
+-----------
+
+- Experimental support for specifying metadata in a ``[project]`` table in
+  ``pyproject.toml`` as specified by :pep:`621` (:ghpull:`393`). If you try
+  using this, please specify ``requires = ["flit_core >=3.2.0,<3.3"]`` in the
+  ``[build-system]`` table for now, in case it needs to change for the next
+  release.
+- Fix writing METADATA file with multi-line information in certain fields
+  such as ``Author`` (:ghpull:`402`).
+- Fix building wheel when a directory such as LICENSES appears in the project
+  root directory (:ghpull:`401`).
+
+Version 3.1
+-----------
+
+- Update handling of names & version numbers in wheel filenames and
+  ``.dist-info`` folders in line with changes in the specs (:ghpull:`395`).
+- Switch from the deprecated ``pytoml`` package to ``toml`` (:ghpull:`378`).
+- Fix specifying backend-path in ``pyproject.toml`` for flit-core (as a list
+  instead of a string).
+
 Version 3.0
 -----------
 

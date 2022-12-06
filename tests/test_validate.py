@@ -90,10 +90,11 @@ def test_validate_environment_marker():
 
 def test_validate_url():
     vurl = fv.validate_url
-    assert vurl('https://github.com/takluyver/flit') == []
+    assert vurl("https://github.com/pypa/flit") == []
 
-    assert len(vurl('github.com/takluyver/flit')) == 1
-    assert len(vurl('https://')) == 1
+    assert len(vurl("github.com/pypa/flit")) == 1
+    assert len(vurl("https://")) == 1
+
 
 def test_validate_project_urls():
     vpu = fv.validate_project_urls
@@ -143,6 +144,26 @@ def test_download_and_cache_classifiers(monkeypatch, tmp_path):
     classifiers = fv._download_and_cache_classifiers()
 
     assert classifiers == {"A", "B", "C"}
+
+
+def test_validate_classifiers_private(monkeypatch):
+    """
+    Test that `Private :: Do Not Upload` considered a valid classifier.
+    This is a special case because it is not listed in a trove classifier
+    but it is a way to make sure that a private package is not get uploaded
+    on PyPI by accident.
+
+    Implementation on PyPI side:
+        https://github.com/pypa/warehouse/pull/5440
+    Issue about officially documenting the trick:
+        https://github.com/pypa/packaging.python.org/issues/643
+    """
+    monkeypatch.setattr(fv, "_read_classifiers_cached", lambda: set())
+
+    actual = fv.validate_classifiers({'invalid'})
+    assert actual == ["Unrecognised classifier: 'invalid'"]
+
+    assert fv.validate_classifiers({'Private :: Do Not Upload'}) == []
 
 
 @responses.activate

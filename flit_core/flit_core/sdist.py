@@ -15,17 +15,6 @@ from . import common
 log = logging.getLogger(__name__)
 
 
-PKG_INFO = """\
-Metadata-Version: 1.1
-Name: {name}
-Version: {version}
-Summary: {summary}
-Home-page: {home_page}
-Author: {author}
-Author-email: {author_email}
-"""
-
-
 def clean_tarinfo(ti, mtime=None):
     """Clean metadata from a TarInfo object to make it more reproducible.
 
@@ -54,7 +43,7 @@ class FilePatterns:
         self.files = set()
 
         for pattern in patterns:
-            for path in sorted(glob(osp.join(basedir, pattern))):
+            for path in sorted(glob(osp.join(basedir, pattern), recursive=True)):
                 rel = osp.relpath(path, basedir)
                 if osp.isdir(path):
                     self.dirs.add(rel)
@@ -83,19 +72,20 @@ class SdistBuilder:
     which is what should normally be published to PyPI.
     """
     def __init__(self, module, metadata, cfgdir, reqs_by_extra, entrypoints,
-                 extra_files, include_patterns=(), exclude_patterns=()):
+                 extra_files, data_directory, include_patterns=(), exclude_patterns=()):
         self.module = module
         self.metadata = metadata
         self.cfgdir = cfgdir
         self.reqs_by_extra = reqs_by_extra
         self.entrypoints = entrypoints
         self.extra_files = extra_files
+        self.data_directory = data_directory
         self.includes = FilePatterns(include_patterns, str(cfgdir))
         self.excludes = FilePatterns(exclude_patterns, str(cfgdir))
 
     @classmethod
     def from_ini_path(cls, ini_path: Path):
-        # Local import so bootstrapping doesn't try to load pytoml
+        # Local import so bootstrapping doesn't try to load toml
         from .config import read_flit_config
         ini_info = read_flit_config(ini_path)
         srcdir = ini_path.parent
@@ -104,8 +94,8 @@ class SdistBuilder:
         extra_files = [ini_path.name] + ini_info.referenced_files
         return cls(
             module, metadata, srcdir, ini_info.reqs_by_extra,
-            ini_info.entrypoints, extra_files, ini_info.sdist_include_patterns,
-            ini_info.sdist_exclude_patterns,
+            ini_info.entrypoints, extra_files, ini_info.data_directory,
+            ini_info.sdist_include_patterns, ini_info.sdist_exclude_patterns,
         )
 
     def prep_entry_points(self):
@@ -126,6 +116,8 @@ class SdistBuilder:
         cfgdir_s = str(self.cfgdir)
         return [
             osp.relpath(p, cfgdir_s) for p in self.module.iter_files()
+        ] + [
+            osp.relpath(p, cfgdir_s) for p in common.walk_data_dir(self.data_directory)
         ] + self.extra_files
 
     def apply_includes_excludes(self, files):
@@ -195,14 +187,9 @@ class SdistBuilder:
             if gen_setup_py:
                 self.add_setup_py(files_to_add, tf)
 
-            pkg_info = PKG_INFO.format(
-                name=self.metadata.name,
-                version=self.metadata.version,
-                summary=self.metadata.summary,
-                home_page=self.metadata.home_page,
-                author=self.metadata.author,
-                author_email=self.metadata.author_email,
-            ).encode('utf-8')
+            stream = io.StringIO()
+            self.metadata.write_metadata_file(stream)
+            pkg_info = stream.getvalue().encode()
             ti = tarfile.TarInfo(pjoin(self.dir_name, 'PKG-INFO'))
             ti.size = len(pkg_info)
             tf.addfile(ti, io.BytesIO(pkg_info))

@@ -3,7 +3,8 @@ from contextlib import contextmanager
 import hashlib
 import logging
 import os
-import os.path as osp
+import sys
+
 from pathlib import Path
 import re
 
@@ -14,15 +15,18 @@ from .versionno import normalise_version
 class Module(object):
     """This represents the module/package that we are going to distribute
     """
+    in_namespace_package = False
+    namespace_package_name = None
+
     def __init__(self, name, directory=Path()):
         self.name = name
-        self.directory = directory
 
         # It must exist either as a .py file or a directory, but not both
-        pkg_dir = directory / name
-        py_file = directory / (name+'.py')
-        src_pkg_dir = directory / 'src' / name
-        src_py_file = directory / 'src' / (name+'.py')
+        name_as_path = name.replace('.', os.sep)
+        pkg_dir = directory / name_as_path
+        py_file = directory / (name_as_path+'.py')
+        src_pkg_dir = directory / 'src' / name_as_path
+        src_py_file = directory / 'src' / (name_as_path+'.py')
 
         existing = set()
         if pkg_dir.is_dir():
@@ -54,10 +58,11 @@ class Module(object):
         elif not existing:
             raise ValueError("No file/folder found for module {}".format(name))
 
-    @property
-    def source_dir(self):
-        """Path of folder containing the module (src/ or project root)"""
-        return self.path.parent
+        self.source_dir = directory / self.prefix
+
+        if '.' in name:
+            self.namespace_package_name = name.rpartition('.')[0]
+            self.in_namespace_package = True
 
     @property
     def file(self):
@@ -130,9 +135,11 @@ def get_docstring_and_version_via_ast(target):
         # string assignment to __version__
         is_version_str = (
                 isinstance(child, ast.Assign)
-                and len(child.targets) == 1
-                and isinstance(child.targets[0], ast.Name)
-                and child.targets[0].id == "__version__"
+                and any(
+                    isinstance(target, ast.Name)
+                    and target.id == "__version__"
+                    for target in child.targets
+                )
                 and isinstance(child.value, ast.Str)
         )
         if is_version_str:
@@ -143,25 +150,52 @@ def get_docstring_and_version_via_ast(target):
     return ast.get_docstring(node), version
 
 
+# To ensure we're actually loading the specified file, give it a unique name to
+# avoid any cached import. In normal use we'll only load one module per process,
+# so it should only matter for the tests, but we'll do it anyway.
+_import_i = 0
+
+
 def get_docstring_and_version_via_import(target):
     """
     Return a tuple like (docstring, version) for the given module,
     extracted by importing the module and pulling __doc__ & __version__
     from it.
     """
+    global _import_i
+    _import_i += 1
+
     log.debug("Loading module %s", target.file)
-    from importlib.machinery import SourceFileLoader
-    sl = SourceFileLoader(target.name, str(target.file))
+    from importlib.util import spec_from_file_location, module_from_spec
+    mod_name = 'flit_core.dummy.import%d' % _import_i
+    spec = spec_from_file_location(mod_name, target.file)
     with _module_load_ctx():
-        m = sl.load_module()
+        m = module_from_spec(spec)
+        # Add the module to sys.modules to allow relative imports to work.
+        # importlib has more code around this to handle the case where two
+        # threads are trying to load the same module at the same time, but Flit
+        # should always be running a single thread, so we won't duplicate that.
+        sys.modules[mod_name] = m
+        try:
+            spec.loader.exec_module(m)
+        finally:
+            sys.modules.pop(mod_name, None)
+
     docstring = m.__dict__.get('__doc__', None)
     version = m.__dict__.get('__version__', None)
     return docstring, version
 
 
-def get_info_from_module(target):
+def get_info_from_module(target, for_fields=('version', 'description')):
     """Load the module/package, get its docstring and __version__
     """
+    if not for_fields:
+        return {}
+
+    # What core metadata calls Summary, PEP 621 calls description
+    want_summary = 'description' in for_fields
+    want_version = 'version' in for_fields
+
     log.debug("Loading module %s", target.file)
 
     # Attempt to extract our docstring & version by parsing our target's
@@ -169,19 +203,23 @@ def get_info_from_module(target):
     # build without necessarily requiring that our built package's
     # requirements are installed.
     docstring, version = get_docstring_and_version_via_ast(target)
-    if not (docstring and version):
+    if (want_summary and not docstring) or (want_version and not version):
         docstring, version = get_docstring_and_version_via_import(target)
 
-    if (not docstring) or not docstring.strip():
-        raise NoDocstringError('Flit cannot package module without docstring, '
-                'or empty docstring. Please add a docstring to your module '
-                '({}).'.format(target.file))
+    res = {}
 
-    version = check_version(version)
+    if want_summary:
+        if (not docstring) or not docstring.strip():
+            raise NoDocstringError(
+                'Flit cannot package module without docstring, or empty docstring. '
+                'Please add a docstring to your module ({}).'.format(target.file)
+            )
+        res['summary'] = docstring.lstrip().splitlines()[0]
 
-    docstring_lines = docstring.lstrip().splitlines()
-    return {'summary': docstring_lines[0],
-            'version': version}
+    if want_version:
+        res['version'] = check_version(version)
+
+    return res
 
 def check_version(version):
     """
@@ -269,6 +307,7 @@ def normalize_file_permissions(st_mode):
 
 class Metadata(object):
 
+    summary = None
     home_page = None
     author = None
     author_email = None
@@ -297,9 +336,9 @@ class Metadata(object):
     metadata_version = "2.1"
 
     def __init__(self, data):
+        data = data.copy()
         self.name = data.pop('name')
         self.version = data.pop('version')
-        self.summary = data.pop('summary')
 
         for k, v in data.items():
             assert hasattr(self, k), "data does not have attribute '{}'".format(k)
@@ -314,11 +353,11 @@ class Metadata(object):
             'Metadata-Version',
             'Name',
             'Version',
+        ]
+        optional_fields = [
             'Summary',
             'Home-page',
             'License',
-        ]
-        optional_fields = [
             'Keywords',
             'Author',
             'Author-email',
@@ -330,11 +369,16 @@ class Metadata(object):
 
         for field in fields:
             value = getattr(self, self._normalise_name(field))
-            fp.write(u"{}: {}\n".format(field, value or 'UNKNOWN'))
+            fp.write(u"{}: {}\n".format(field, value))
 
         for field in optional_fields:
             value = getattr(self, self._normalise_name(field))
             if value is not None:
+                # TODO: verify which fields can be multiline
+                # The spec has multiline examples for Author, Maintainer &
+                # License (& Description, but we put that in the body)
+                # Indent following lines with 8 spaces:
+                value = '\n        '.join(value.splitlines())
                 fp.write(u"{}: {}\n".format(field, value))
 
         for clsfr in self.classifiers:
@@ -356,27 +400,50 @@ class Metadata(object):
     def supports_py2(self):
         """Return True if Requires-Python indicates Python 2 support."""
         for part in (self.requires_python or "").split(","):
-            if re.search(r"^\s*(>\s*(=\s*)?)?[3-9]", part):
+            if re.search(r"^\s*(>=?|~=|===?)?\s*[3-9]", part):
                 return False
         return True
 
 
 def make_metadata(module, ini_info):
     md_dict = {'name': module.name, 'provides': [module.name]}
-    md_dict.update(get_info_from_module(module))
+    md_dict.update(get_info_from_module(module, ini_info.dynamic_metadata))
     md_dict.update(ini_info.metadata)
     return Metadata(md_dict)
 
-def metadata_and_module_from_ini_path(ini_path):
-    from .config import read_flit_config
-    ini_path = str(ini_path)
-    ini_info = read_flit_config(ini_path)
-    module = Module(ini_info.module, osp.dirname(ini_path))
-    metadata = make_metadata(module, ini_info)
-    return metadata,module
+
+
+def normalize_dist_name(name: str, version: str) -> str:
+    """Normalizes a name and a PEP 440 version
+
+    The resulting string is valid as dist-info folder name
+    and as first part of a wheel filename
+
+    See https://packaging.python.org/specifications/binary-distribution-format/#escaping-and-unicode
+    """
+    normalized_name = re.sub(r'[-_.]+', '_', name, flags=re.UNICODE).lower()
+    assert check_version(version) == version
+    assert '-' not in version, 'Normalized versions can’t have dashes'
+    return '{}-{}'.format(normalized_name, version)
+
 
 def dist_info_name(distribution, version):
     """Get the correct name of the .dist-info folder"""
-    escaped_name = re.sub(r"[^\w\d.]+", "_", distribution, flags=re.UNICODE)
-    escaped_version = re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE)
-    return u'{}-{}.dist-info'.format(escaped_name, escaped_version)
+    return normalize_dist_name(distribution, version) + '.dist-info'
+
+
+def walk_data_dir(data_directory):
+    """Iterate over the files in the given data directory.
+
+    Yields paths prefixed with data_directory - caller may want to make them
+    relative to that. Excludes any __pycache__ subdirectories.
+    """
+    if data_directory is None:
+        return
+
+    for dirpath, dirs, files in os.walk(data_directory):
+        for file in sorted(files):
+            full_path = os.path.join(dirpath, file)
+            yield full_path
+
+        dirs[:] = [d for d in sorted(dirs) if d != '__pycache__']

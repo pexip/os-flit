@@ -21,18 +21,26 @@ pyproj_toml = Path('pyproject.toml')
 def get_requires_for_build_wheel(config_settings=None):
     """Returns a list of requirements for building, as strings"""
     info = read_flit_config(pyproj_toml)
-    # If we can get the module info from the AST, we don't need any extra
+    # If we can get version & description from pyproject.toml (PEP 621), or
+    # by parsing the module (_via_ast), we don't need any extra
     # dependencies. If not, we'll need to try importing it, so report any
     # runtime dependencies as build dependencies.
+    want_summary = 'description' in info.dynamic_metadata
+    want_version = 'version' in info.dynamic_metadata
+
     module = Module(info.module, Path.cwd())
     docstring, version = get_docstring_and_version_via_ast(module)
-    if (docstring is None) or (version is None):
+
+    if (want_summary and not docstring) or (want_version and not version):
         return info.metadata.get('requires_dist', [])
     else:
         return []
 
 # Requirements to build an sdist are the same as for a wheel
 get_requires_for_build_sdist = get_requires_for_build_wheel
+
+# Requirements to build an editable are the same as for a wheel
+get_requires_for_build_editable = get_requires_for_build_wheel
 
 def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
     """Creates {metadata_directory}/foo-1.2.dist-info"""
@@ -56,9 +64,17 @@ def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
 
     return osp.basename(dist_info)
 
+# Metadata for editable are the same as for a wheel
+prepare_metadata_for_build_editable = prepare_metadata_for_build_wheel
+
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds a wheel, places it in wheel_directory"""
     info = make_wheel_in(pyproj_toml, Path(wheel_directory))
+    return info.file.name
+
+def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
+    """Builds an "editable" wheel, places it in wheel_directory"""
+    info = make_wheel_in(pyproj_toml, Path(wheel_directory), editable=True)
     return info.file.name
 
 def build_sdist(sdist_directory, config_settings=None):
