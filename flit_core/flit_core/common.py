@@ -3,8 +3,7 @@ from contextlib import contextmanager
 import hashlib
 import logging
 import os
-import sys
-
+import os.path as osp
 from pathlib import Path
 import re
 
@@ -15,18 +14,15 @@ from .versionno import normalise_version
 class Module(object):
     """This represents the module/package that we are going to distribute
     """
-    in_namespace_package = False
-    namespace_package_name = None
-
     def __init__(self, name, directory=Path()):
         self.name = name
+        self.directory = directory
 
         # It must exist either as a .py file or a directory, but not both
-        name_as_path = name.replace('.', os.sep)
-        pkg_dir = directory / name_as_path
-        py_file = directory / (name_as_path+'.py')
-        src_pkg_dir = directory / 'src' / name_as_path
-        src_py_file = directory / 'src' / (name_as_path+'.py')
+        pkg_dir = directory / name
+        py_file = directory / (name+'.py')
+        src_pkg_dir = directory / 'src' / name
+        src_py_file = directory / 'src' / (name+'.py')
 
         existing = set()
         if pkg_dir.is_dir():
@@ -58,11 +54,10 @@ class Module(object):
         elif not existing:
             raise ValueError("No file/folder found for module {}".format(name))
 
-        self.source_dir = directory / self.prefix
-
-        if '.' in name:
-            self.namespace_package_name = name.rpartition('.')[0]
-            self.in_namespace_package = True
+    @property
+    def source_dir(self):
+        """Path of folder containing the module (src/ or project root)"""
+        return self.path.parent
 
     @property
     def file(self):
@@ -135,11 +130,9 @@ def get_docstring_and_version_via_ast(target):
         # string assignment to __version__
         is_version_str = (
                 isinstance(child, ast.Assign)
-                and any(
-                    isinstance(target, ast.Name)
-                    and target.id == "__version__"
-                    for target in child.targets
-                )
+                and len(child.targets) == 1
+                and isinstance(child.targets[0], ast.Name)
+                and child.targets[0].id == "__version__"
                 and isinstance(child.value, ast.Str)
         )
         if is_version_str:
@@ -166,21 +159,10 @@ def get_docstring_and_version_via_import(target):
     _import_i += 1
 
     log.debug("Loading module %s", target.file)
-    from importlib.util import spec_from_file_location, module_from_spec
-    mod_name = 'flit_core.dummy.import%d' % _import_i
-    spec = spec_from_file_location(mod_name, target.file)
+    from importlib.machinery import SourceFileLoader
+    sl = SourceFileLoader('flit_core.dummy.import%d' % _import_i, str(target.file))
     with _module_load_ctx():
-        m = module_from_spec(spec)
-        # Add the module to sys.modules to allow relative imports to work.
-        # importlib has more code around this to handle the case where two
-        # threads are trying to load the same module at the same time, but Flit
-        # should always be running a single thread, so we won't duplicate that.
-        sys.modules[mod_name] = m
-        try:
-            spec.loader.exec_module(m)
-        finally:
-            sys.modules.pop(mod_name, None)
-
+        m = sl.load_module()
     docstring = m.__dict__.get('__doc__', None)
     version = m.__dict__.get('__version__', None)
     return docstring, version
@@ -400,7 +382,7 @@ class Metadata(object):
     def supports_py2(self):
         """Return True if Requires-Python indicates Python 2 support."""
         for part in (self.requires_python or "").split(","):
-            if re.search(r"^\s*(>=?|~=|===?)?\s*[3-9]", part):
+            if re.search(r"^\s*(>\s*(=\s*)?)?[3-9]", part):
                 return False
         return True
 
@@ -421,7 +403,7 @@ def normalize_dist_name(name: str, version: str) -> str:
 
     See https://packaging.python.org/specifications/binary-distribution-format/#escaping-and-unicode
     """
-    normalized_name = re.sub(r'[-_.]+', '_', name, flags=re.UNICODE).lower()
+    normalized_name = re.sub(r'[-_.]+', '_', name, flags=re.UNICODE)
     assert check_version(version) == version
     assert '-' not in version, 'Normalized versions can’t have dashes'
     return '{}-{}'.format(normalized_name, version)
@@ -430,20 +412,3 @@ def normalize_dist_name(name: str, version: str) -> str:
 def dist_info_name(distribution, version):
     """Get the correct name of the .dist-info folder"""
     return normalize_dist_name(distribution, version) + '.dist-info'
-
-
-def walk_data_dir(data_directory):
-    """Iterate over the files in the given data directory.
-
-    Yields paths prefixed with data_directory - caller may want to make them
-    relative to that. Excludes any __pycache__ subdirectories.
-    """
-    if data_directory is None:
-        return
-
-    for dirpath, dirs, files in os.walk(data_directory):
-        for file in sorted(files):
-            full_path = os.path.join(dirpath, file)
-            yield full_path
-
-        dirs[:] = [d for d in sorted(dirs) if d != '__pycache__']

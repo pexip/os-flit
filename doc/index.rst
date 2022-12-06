@@ -18,7 +18,6 @@ Documentation contents
    upload
    reproducible
    rationale
-   bootstrap
 
 .. toctree::
    :maxdepth: 1

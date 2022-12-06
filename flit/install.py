@@ -196,17 +196,6 @@ class Installer(object):
 
                 self.installed_files.append(cmd_file)
 
-    def install_data_dir(self, target_data_dir):
-        for src_path in common.walk_data_dir(self.ini_info.data_directory):
-            rel_path = os.path.relpath(src_path, self.ini_info.data_directory)
-            dst_path = os.path.join(target_data_dir, rel_path)
-            os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-            if self.symlink:
-                os.symlink(os.path.realpath(src_path), dst_path)
-            else:
-                shutil.copy2(src_path, dst_path)
-            self.installed_files.append(dst_path)
-
     def _record_installed_directory(self, path):
         for dirpath, dirnames, files in os.walk(path):
             for f in files:
@@ -298,8 +287,7 @@ class Installer(object):
         os.makedirs(dirs['purelib'], exist_ok=True)
         os.makedirs(dirs['scripts'], exist_ok=True)
 
-        module_rel_path = self.module.path.relative_to(self.module.source_dir)
-        dst = osp.join(dirs['purelib'], module_rel_path)
+        dst = osp.join(dirs['purelib'], self.module.path.name)
         if osp.lexists(dst):
             if osp.isdir(dst) and not osp.islink(dst):
                 shutil.rmtree(dst)
@@ -314,21 +302,19 @@ class Installer(object):
         if self.python != sys.executable:
             self.install_reqs_my_python_if_needed()
 
-        src = self.module.path
+        src = str(self.module.path)
         if self.symlink:
-            if self.module.in_namespace_package:
-                ns_dir = os.path.dirname(dst)
-                os.makedirs(ns_dir, exist_ok=True)
-
             log.info("Symlinking %s -> %s", src, dst)
-            os.symlink(src.resolve(), dst)
+            os.symlink(osp.abspath(src), dst)
             self.installed_files.append(dst)
         elif self.pth:
             # .pth points to the the folder containing the module (which is
             # added to sys.path)
-            pth_file = pathlib.Path(dirs['purelib'], self.module.name + '.pth')
-            log.info("Adding .pth file %s for %s", pth_file, self.module.source_dir)
-            pth_file.write_text(str(self.module.source_dir.resolve()), 'utf-8')
+            pth_target = osp.dirname(osp.abspath(src))
+            pth_file = pathlib.Path(dst).with_suffix('.pth')
+            log.info("Adding .pth file %s for %s", pth_file, pth_target)
+            with pth_file.open("w") as f:
+                f.write(pth_target)
             self.installed_files.append(pth_file)
         elif self.module.is_package:
             log.info("Copying directory %s -> %s", src, dst)
@@ -336,14 +322,11 @@ class Installer(object):
             self._record_installed_directory(dst)
         else:
             log.info("Copying file %s -> %s", src, dst)
-            os.makedirs(osp.dirname(dst), exist_ok=True)
             shutil.copy2(src, dst)
             self.installed_files.append(dst)
 
         scripts = self.ini_info.entrypoints.get('console_scripts', {})
         self.install_scripts(scripts, dirs['scripts'])
-
-        self.install_data_dir(dirs['data'])
 
         self.write_dist_info(dirs['purelib'])
 

@@ -30,10 +30,6 @@ Version constraints:
 - :ref:`pyproject_toml_project` requires ``flit_core >=3.2``
 - :ref:`pyproject_old_metadata` requires ``flit_core >=2,<4``
 - The older :doc:`flit.ini file <flit_ini>` requires ``flit_core <3``.
-- TOML features new in version 1.0 require ``flit_core >=3.4``.
-- ``flit_core`` 3.3 is the last version supporting Python 3.4 & 3.5. Packages
-  supporting these Python versions can only use `TOML v0.5
-  <https://toml.io/en/v0.5.0>`_.
 - Only ``flit_core`` 2.x can build packages on Python 2, so packages still
   supporting Python 2 cannot use new-style metadata (the ``[project]`` table).
 
@@ -63,19 +59,14 @@ A simple ``[project]`` table might look like this:
         "License :: OSI Approved :: MIT License",
     ]
     requires-python = ">=3.5"
-    dynamic = ["version", "description"]
+    dynamic = ['version', 'description']
 
 The allowed fields are:
 
 name
   The name your package will have on PyPI. This field is required. For Flit,
-  this name, with any hyphens replaced by underscores, is also the default value
-  of the import name (see :ref:`pyproject_module` if that needs to be
-  different).
-
-  .. versionchanged:: 3.8
-     Hyphens in the project name are now translated to underscores for the
-     import name.
+  this also points to your package as an import name by default (see
+  :ref:`pyproject_module` if that needs to be different).
 version
   Version number as a string. If you want Flit to get this from a
   ``__version__`` attribute, leave it out of the TOML config and include
@@ -169,8 +160,8 @@ any names inside it. Here it is for flit:
 .. code-block:: toml
 
   [project.urls]
-  Documentation = "https://flit.pypa.io"
-  Source = "https://github.com/pypa/flit"
+  Documentation = "https://flit.readthedocs.io/en/latest/"
+  Source = "https://github.com/takluyver/flit"
 
 .. _pyproject_project_scripts:
 
@@ -237,10 +228,6 @@ you should specify the install (PyPI) name in the ``[project]`` table
 
     [tool.flit.module]
     name = "nsist"
-
-Flit looks for the source of the package by its import name. The source may be
-located either in the directory that holds the ``pyproject.toml`` file, or in a
-``src/`` subdirectory.
 
 .. _pyproject_old_metadata:
 
@@ -333,7 +320,7 @@ license
 maintainer, maintainer-email
   Like author, for if you've taken over a project from someone else.
 
-Here was the metadata section from flit using the older style:
+Here's the full metadata section from flit itself:
 
 .. code-block:: toml
 
@@ -341,15 +328,15 @@ Here was the metadata section from flit using the older style:
     module="flit"
     author="Thomas Kluyver"
     author-email="thomas@kluyver.me.uk"
-    home-page="https://github.com/pypa/flit"
+    home-page="https://github.com/takluyver/flit"
     requires=[
-        "flit_core >=2.2.0",
+        "flit_core>=2.2.0",
         "requests",
         "docutils",
-        "tomli",
-        "tomli-w",
+        "toml",
+        "zipfile36; python_version in '3.3 3.4 3.5'",
     ]
-    requires-python=">=3.6"
+    requires-python=">=3.5"
     description-file="README.rst"
     classifiers=[
         "Intended Audience :: Developers",
@@ -373,7 +360,7 @@ any names inside it. Here it is for flit:
 .. code-block:: toml
 
   [tool.flit.metadata.urls]
-  Documentation = "https://flit.pypa.io"
+  Documentation = "https://flit.readthedocs.io/en/latest/"
 
 .. versionadded:: 1.0
 
@@ -418,63 +405,12 @@ These paths:
 - Must be relative paths from the directory containing ``pyproject.toml``
 - Cannot go outside that directory (no ``../`` paths)
 - Cannot contain control characters or ``<>:"\\``
+- Cannot use recursive glob patterns (``**/``)
 - Can refer to directories, in which case they include everything under the
   directory, including subdirectories
 - Should match the case of the files they refer to, as case-insensitive matching
   is platform dependent
 
-.. versionchanged:: 3.8
-   Include and exclude patterns can now use recursive glob patterns (``**``).
-
-Exclusions have priority over inclusions. Bytecode is excluded by default and cannot
-be included.
-
-.. note::
-
-   If you are not using :ref:`build_cmd` but  ``flit_core`` via another build
-   frontend, Flit doesn't doesn't check the VCS for files to include but instead
-   builds a 'minimal' sdist (which includes the files necessary to build a wheel).
-   You'll have to adapt your inclusion/exclusion rules to achieve the same result
-   as you'd get with :ref:`build_cmd`.
-
-.. _pyproject_toml_external_data:
-
-External data section
----------------------
-
-.. versionadded:: 3.7
-
-Data files which your code will use should go inside the Python package folder.
-Flit will package these with no special configuration.
-
-However, sometimes it's useful to package external files for system integration,
-such as man pages or files defining a Jupyter extension. To do this, arrange
-the files within a directory such as ``data``, next to your ``pyproject.toml``
-file, and add a section like this:
-
-.. code-block:: toml
-
-    [tool.flit.external-data]
-    directory = "data"
-
-Paths within this directory are typically installed to corresponding paths under
-a prefix (such as a virtualenv directory). E.g. you might save a man page for a
-script as ``(data)/share/man/man1/foo.1``.
-
-Whether these files are detected by the systems they're meant to integrate with
-depends on how your package is installed and how those systems are configured.
-For instance, installing in a virtualenv usually doesn't affect anything outside
-that environment. Don't rely on these files being picked up unless you have
-close control of how the package will be installed.
-
-If you install a package with ``flit install --symlink``, a symlink is made
-for each file in the external data directory. Otherwise (including development
-installs with ``pip install -e``), these files are copied to their destination,
-so changes here won't take effect until you reinstall the package.
-
-.. note::
-
-   For users coming from setuptools: external data corresponds to setuptools'
-   ``data_files`` parameter, although setuptools offers more flexibility.
+Exclusions have priority over inclusions.
 
 .. _environment marker: https://www.python.org/dev/peps/pep-0508/#environment-markers

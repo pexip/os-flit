@@ -8,13 +8,12 @@ import tarfile
 from tempfile import TemporaryDirectory
 from testpath import assert_isfile, MockCommand
 
-from flit import sdist, common
+from flit import sdist
 
 samples_dir = Path(__file__).parent / 'samples'
 
 def test_auto_packages():
-    module = common.Module('package1', samples_dir / 'package1')
-    packages, pkg_data = sdist.auto_packages(module)
+    packages, pkg_data = sdist.auto_packages(str(samples_dir / 'package1' / 'package1'))
     assert packages == ['package1', 'package1.subpkg', 'package1.subpkg2']
     assert pkg_data == {'': ['*'],
                         'package1': ['data_dir/*'],
@@ -138,15 +137,3 @@ def test_make_setup_py_package_dir_src():
     builder = sdist.SdistBuilder.from_ini_path(samples_dir / 'packageinsrc' / 'pyproject.toml')
     ns = get_setup_assigns(builder.make_setup_py())
     assert ns['package_dir'] == {'': 'src'}
-
-def test_make_setup_py_ns_pkg():
-    builder = sdist.SdistBuilder.from_ini_path(samples_dir / 'ns1-pkg' / 'pyproject.toml')
-    setup = builder.make_setup_py()
-    ns = get_setup_assigns(setup)
-    assert ns['packages'] == ['ns1', 'ns1.pkg']
-
-def test_make_setup_py_ns_pkg_mod():
-    builder = sdist.SdistBuilder.from_ini_path(samples_dir / 'ns1-pkg-mod' / 'pyproject.toml')
-    setup = builder.make_setup_py()
-    ns = get_setup_assigns(setup)
-    assert ns['packages'] == ['ns1']

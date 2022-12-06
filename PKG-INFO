@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: flit
-Version: 3.8.0
+Version: 3.3.0
 Summary: A simple packaging tool for simple packages.
 Author-email: Thomas Kluyver <thomas@kluyver.me.uk>
 Requires-Python: >=3.6
@@ -9,10 +9,11 @@ Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: BSD License
 Classifier: Programming Language :: Python :: 3
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
-Requires-Dist: flit_core >=3.8.0
+Requires-Dist: flit_core>=3.3.0
 Requires-Dist: requests
 Requires-Dist: docutils
-Requires-Dist: tomli-w
+Requires-Dist: toml
+Requires-Dist: zipfile36; python_version == '3.5'
 Requires-Dist: sphinx ; extra == "doc"
 Requires-Dist: sphinxcontrib_github_alt ; extra == "doc"
 Requires-Dist: pygments-github-lexers ; extra == "doc"
@@ -20,10 +21,8 @@ Requires-Dist: testpath ; extra == "test"
 Requires-Dist: responses ; extra == "test"
 Requires-Dist: pytest>=2.7.3 ; extra == "test"
 Requires-Dist: pytest-cov ; extra == "test"
-Requires-Dist: tomli ; extra == "test"
-Project-URL: Changelog, https://flit.pypa.io/en/stable/history.html
-Project-URL: Documentation, https://flit.pypa.io
-Project-URL: Source, https://github.com/pypa/flit
+Project-URL: Documentation, https://flit.readthedocs.io/en/latest/
+Project-URL: Source, https://github.com/takluyver/flit
 Provides-Extra: doc
 Provides-Extra: test
 
@@ -59,7 +58,7 @@ or as a directory — and you want to distribute it.
 
        """An amazing sample package!"""
 
-       __version__ = "0.1"
+       __version__ = '0.1'
 
 2. Install flit if you don't already have it::
 
@@ -71,16 +70,14 @@ or as a directory — and you want to distribute it.
    .. code-block:: ini
 
        [build-system]
-       requires = ["flit_core >=3.2,<4"]
+       requires = ["flit_core >=2,<4"]
        build-backend = "flit_core.buildapi"
 
-       [project]
-       name = "foobar"
-       authors = [{name = "Sir Robin", email = "robin@camelot.uk"}]
-       dynamic = ["version", "description"]
-
-       [project.urls]
-       Home = "https://github.com/sirrobin/foobar"
+       [tool.flit.metadata]
+       module = "foobar"
+       author = "Sir Robin"
+       author-email = "robin@camelot.uk"
+       home-page = "https://github.com/sirrobin/foobar"
 
    You can edit this file to add other metadata, for example to set up
    command line scripts. See the
