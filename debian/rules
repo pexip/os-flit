@@ -5,32 +5,37 @@
 #export DH_VERBOSE=1
 export FLIT_NO_NETWORK=True
 export FLIT_ROOT_INSTALL=1
-export PYBUILD_TEST_ARGS=-k 'not test_find_in_path' --pyargs flit_core
 include /usr/share/dpkg/pkg-info.mk
 
 %:
 	dh $@ --with python3 --buildsystem=pybuild
 
-execute_before_dh_auto_clean:
+override_dh_auto_clean:
 	set -e; \
 	if [ -e _removed ]; then \
 		mv _removed/vendor flit_core/flit_core/; \
 		rmdir _removed; \
 	fi
+	dh_auto_clean --name flit
+	dh_auto_clean -d flit_core --name flit_core
 
-execute_before_dh_auto_configure:
+override_dh_auto_configure:
 	set -e; \
 	if [ -e flit_core/flit_core/vendor ]; then \
 		mkdir -p _removed; \
 		mv flit_core/flit_core/vendor _removed/; \
 	fi
+	pybuild --configure --name flit
+	pybuild --configure -d flit_core --name flit_core
 
-execute_after_dh_auto_build:
-	# Workaround #1018952: pybuild doesn't make it easy to built multiple packages
-	PYBUILD_BEFORE_BUILD="mv {build_dir}/scripts-{version} {build_dir}/flit-scripts-{version} && rm {build_dir}/../*.whl" \
-		PYBUILD_AFTER_BUILD="mv {build_dir}/flit-scripts-{version} {build_dir}/scripts-{version}" \
-		pybuild --build -d flit_core
+override_dh_auto_build:
+	pybuild --build --name flit
+	pybuild --build -d flit_core --name flit_core
+
+override_dh_auto_install:
+	pybuild --install --dest-dir debian/flit --name flit
+	pybuild --install --dest-dir debian/flit -d flit_core --name flit_core
 	sphinx-build -b man -D extensions='sphinx.ext.ifconfig' -D man_show_urls=True doc/ debian/
 
-override_dh_python3:
-	dh_python3 -p flit
+override_dh_auto_test:
+	pybuild --test -d flit_core --name flit_core --test-pytest --test-args="-k 'not test_find_in_path'"

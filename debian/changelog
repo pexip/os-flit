@@ -1,8 +1,13 @@
-flit (3.8.0-2~bpo11+1) bullseye-backports; urgency=medium
+flit (3.8.0-3) unstable; urgency=medium
 
-  * Rebuild for bullseye-backports.
+  [ Stefano Rivera ]
+  * Replace the hacks in debian/rules to support multiple wheels with --name.
+    (Closes: #1026678)
 
- -- Scott Kitterman <scott@kitterman.com>  Tue, 22 Nov 2022 20:42:11 -0500
+  [ Scott Kitterman ]
+  * Bump standards-version to 4.6.2 without further change
+
+ -- Scott Kitterman <scott@kitterman.com>  Wed, 04 Jan 2023 18:12:03 -0500
 
 flit (3.8.0-2) unstable; urgency=medium
 
@@ -68,13 +73,6 @@ flit (3.5.1-1) unstable; urgency=medium
     generation in earlier versions
 
  -- Scott Kitterman <scott@kitterman.com>  Mon, 13 Dec 2021 20:31:59 -0500
-
-flit (3.3.0-1~bpo11+1) bullseye-backports; urgency=medium
-
-  * Rebuild for bullseye-backports.
-  * Update gbp.conf to use debian/bullseye-backports
-
- -- Scott Kitterman <scott@kitterman.com>  Wed, 01 Dec 2021 16:35:56 -0500
 
 flit (3.3.0-1) unstable; urgency=medium
 
