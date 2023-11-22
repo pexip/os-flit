@@ -1,3 +1,9 @@
+flit (3.8.0-3pexip1) pexip-bookworm; urgency=medium
+
+  * Update to bookworm version.
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Wed, 22 Nov 2023 09:57:54 +0000
+
 flit (3.8.0-3) unstable; urgency=medium
 
   [ Stefano Rivera ]
